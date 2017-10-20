@@ -1,0 +1,43 @@
+.message-box{
+    display: block;
+    width: 50%;
+    margin: 10px auto 0 auto;
+}
+
+.your-msg{
+    color: #8f9191;
+    padding: 5px;
+    text-align: center;
+    background-color: #bcdfe0;
+    display: block;
+    width: 25%;
+    margin: 35px auto 0 auto;
+    border-radius: 15px;
+}
+
+.result{
+    color: #8f9191;
+    padding: 5px;
+    text-align: center;
+    background-color: #f4c9a1;
+    display: block;
+    width: 25%;
+    margin: 35px auto 0 auto;
+    border-radius: 15px;
+}
+
+.echo-box{
+    display: block;
+    width: 50%;
+    margin: 10px auto 0 auto;
+    min-height: 80px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.send{
+    display: block;
+    width: 15%;
+    padding: 7px 3px;
+    margin: 7px auto;
+}
