@@ -4,9 +4,12 @@ var app = express();
 var http = require('http').Server(app);
 var port = 8080;
 var io = require('socket.io')(http);
-var userId = 1; //Distribuição de IDs aos clientes
-var connectionCount = 0; //Contador de clientes conectados
-var firstConnection = true; //Verifica se a conexão é a primeira
+var userId = 0; //Distribuição de IDs aos clientes
+var connectionCount = 0;
+var freeField = false;
+var count = 0;
+var detainerConnected = false;
+var idsConnected = [];
 /* ---------------------------------- |||| -----------------------------------*/
 
 /* ----------------------------------ROTEAMENTO INICIAL-----------------------*/
@@ -26,42 +29,69 @@ http.listen(port, function(err) {
 });
 /* ---------------------------------- |||| -----------------------------------*/
 
+/* ----------------------------------FUNÇÕES AUXILIARES-----------------------*/
+var updateConnectedIds = function(ids){
+    var numOfConnections = ids.length() - 1;
+    var count = 0;
+    io.emit('verifyFieldDetainer');
+    socket.on('fieldVerification', function(data) {
+        count++;
+        if (numOfConnection == 0) {
+            freeField = true;
+            console.log('Field Freed: 0 Connections.');
+        }
+        if (data.fieldOccupied && detainerConnected == false) {
+            detainerConnected = true;
+        }
+        if (count == connectionCount && detainerConnected == false) {
+            freeField = true;
+            console.log('Field Freed: Detainer Disconnected.\n');
+        }
+    });
+};
+
+
 /* ----------------------------------CONEXÃO SOCKET SERVER E EVENTOS----------*/
 io.on('connection', function(socket) {
-    /* A primeira conexão tem firstConnection=true para permitir
-       sincronização dos clientes e garantir integridade de vm.msg */
-    if(connectionCount === 0 && firstConnection === true){
-        socket.emit('handshake', {
-                id: userId,
-                first: firstConnection
-        });
-        firstConnection = false;
-    }
     connectionCount++;
-    /* Handshake distribui IDs e firstConnection=false */
-    socket.emit('handshake',{
-        id: userId,
-        first: firstConnection
-    });
     userId++;
-    /* Exibe mensagem de disconexão e decrementa contador de conexão */
-    socket.on('disconnect', function() {
-        connectionCount--;
-        if(connectionCount == 0){
-            firstConnection = true;
+    if(userId==1){
+        freeField=true;
+    }
+    else {
+        freeField=false;
+    }
+    socket.emit('handshake', {
+        id: userId,
+        field: freeField
+    });
+
+    socket.on('handshake2', function(data) {
+        idsConnected.push(data.id);
+        console.log('User ' + data.id + ' connected');
+        console.log('retainsField:' + data.fieldOccupied + '\n');
+        if (data.id > 1) {
+            io.emit('requestUpdate');
         }
+        if (data.fieldOccupied) {
+            freeField = false;
+        }
+    });
+
+    socket.on('disconnect', function() {
+        updateConnectedIds(idsConnected);
+        count = 0;
+        detainerConnected = false;
         console.log('User disconnected');
     });
-    /* Recebe handshake do cliente e exibe seu ID. Dispara um update
-       request para que os clientes já conectados transmitam vm.msg para
-       o novo cliente recém conectado*/
-    socket.on('handshake2', function(data) {
-        console.log('User ' + data.id + ' connected');
-        io.emit('request-update');
-    });
-    /* Recebe vm.msg de um cliente e a transmite para os demais */
-    socket.on('chat-message',function(data){
+
+
+
+    socket.on('chat-message', function(data) {
         io.emit('chat-message', data);
     });
+
+
 });
+
 /* ---------------------------------- |||| -----------------------------------*/
